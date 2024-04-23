@@ -4,9 +4,8 @@
 **Clipify** is an innovative tool designed to automate the conversion of long-form videos into captivating short-form content such as reels, stories, and other social media-friendly formats. Leveraging cutting-edge technologies in video processing, speech recognition, and machine learning, Clipify extracts the most engaging parts of videos to create clips that are not only more digestible but also tailored for maximum engagement on social media platforms.
 
 
-
 <p align="center">
-  <img src="https://github.com/Aby-ss/Clipify/Clipify Build Structure.jpg" alt="Clipify Build Structure" width="350">
+  <img src="https://github.com/Aby-ss/Clipify/assets/103417697/162b0ec9-d7a4-4573-b001-6834bff6cb4c" alt="Clipify Build Structure" width="350">
 </p>
 
 
