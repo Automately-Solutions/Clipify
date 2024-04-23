@@ -6,7 +6,7 @@
 
 
 <p align="center">
-  <img src="https://github.com/Aby-ss/Clipify/assets/103417697/55928c52-1fd9-4f6c-81ac-da37f7200bf8" alt="Clipify Build Structure" width="350">
+  <img src="https://github.com/Aby-ss/Clipify/Clipify Build Structure.jpg" alt="Clipify Build Structure" width="350">
 </p>
 
 
