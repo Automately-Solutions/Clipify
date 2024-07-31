@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/806daf95-b87d-4957-a2df-d494fc6e6184"/>
+</div>
+
 # Clipify: Transform Long Videos into Engaging Short Clips
 [![wakatime](https://wakatime.com/badge/user/04c60a11-7fcd-4d1d-accf-a4bb74ceedec/project/018ef1ac-82f2-4303-a97b-09f0a83b9f44.svg)](https://wakatime.com/badge/user/04c60a11-7fcd-4d1d-accf-a4bb74ceedec/project/018ef1ac-82f2-4303-a97b-09f0a83b9f44)
 
