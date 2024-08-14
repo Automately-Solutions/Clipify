@@ -12,9 +12,7 @@
   <img src="https://github.com/Aby-ss/Clipify/assets/103417697/162b0ec9-d7a4-4573-b001-6834bff6cb4c" alt="Clipify Build Structure" width="350">
 </p>
 
-
-
-## Features
+## Features ✨
 
 **Clipify** provides a seamless experience with several key features:
 
