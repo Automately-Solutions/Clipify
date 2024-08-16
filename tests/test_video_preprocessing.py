@@ -1,11 +1,10 @@
-import os
-import nltk
-import subprocess
-import speech_recognition as sr
-from pydub import AudioSegment
-
+from rich.prompt import Prompt
 from rich.traceback import install
 install(show_locals=True)
+
+import os
+import subprocess
+import whisper
 
 def download_youtube_video(url, output_path='Test Videos'):
     import yt_dlp
@@ -24,30 +23,35 @@ def extract_audio_from_video(video_file):
     subprocess.call(command, shell=True)
     return audio_file
 
-def transcribe_audio(audio_file):
-    recognizer = sr.Recognizer()
-    with sr.AudioFile(audio_file) as source:
-        audio = recognizer.record(source)
-    try:
-        transcript = recognizer.recognize_google(audio)
-    except sr.UnknownValueError:
-        transcript = "Google Speech Recognition could not understand audio"
-    except sr.RequestError:
-        transcript = "Could not request results from Google Speech Recognition service"
-    return transcript
+def transcribe_audio_with_whisper(audio_file):
+    model = whisper.load_model("base")
+    result = model.transcribe(audio_file)
+    return result["text"]
 
-def process_transcript(transcript):
-    sentences = nltk.sent_tokenize(transcript)
-    return sentences
+def preprocessing_input():
+    choice = Prompt.ask("Choose your preprocessing input option", choices=["Download a new video", "Transcribe an existing video"])
 
-# Example usage
-video_url = input("Enter the YouTube video URL: ")
-video_file = download_youtube_video(video_url)
-audio_file = extract_audio_from_video(video_file)
-transcript = transcribe_audio(audio_file)
-processed_transcript = process_transcript(transcript)
+    if choice == "Download a new video":
+        video_url = input("Enter the YouTube video URL: ")
+        video_file = download_youtube_video(video_url)
+        audio_file = extract_audio_from_video(video_file)
+        transcript = transcribe_audio_with_whisper(audio_file)
 
-# Output the processed transcript
-for i, sentence in enumerate(processed_transcript):
-    print(f"{i+1}: {sentence}")
+    elif choice == "Transcribe an existing video":
+        video_files = os.listdir('Test Videos')
+        if not video_files:
+            print("No video files found in 'Test Videos' directory.")
+            return
+        for i, file in enumerate(video_files):
+            print(f"{i+1}. {file}")
+        file_index = int(input("Choose a video file to transcribe: ")) - 1
+        video_file = os.path.join('Test Videos', video_files[file_index])
+        audio_file = extract_audio_from_video(video_file)
+        transcript = transcribe_audio_with_whisper(audio_file)
+
+    print("Transcript:\n", transcript)
+
+
+preprocessing_input()
+
 
