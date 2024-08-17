@@ -2,6 +2,10 @@ from rich.prompt import Prompt
 from rich.traceback import install
 install(show_locals=True)
 
+from rich import box
+from rich import print
+from rich.panel import Panel
+
 import os
 import subprocess
 import whisper
@@ -49,7 +53,11 @@ def preprocessing_input():
         audio_file = extract_audio_from_video(video_file)
         transcript = transcribe_audio_with_whisper(audio_file)
 
-    print("Transcript:\n", transcript)
+        with open("transcript.txt", "w") as file:
+            file.write(transcript)
+        print(Panel("Saved Transcript ✅", border_style="bold green"))
+
+    print(Panel(f"{transcript}", border_style="bold", title="Transcript"))
 
 
 preprocessing_input()
