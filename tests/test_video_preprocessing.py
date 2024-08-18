@@ -1,14 +1,19 @@
+import re
 from rich.prompt import Prompt
 from rich.traceback import install
 install(show_locals=True)
 
-from rich import box
 from rich import print
 from rich.panel import Panel
 
 import os
 import subprocess
 import whisper
+import nltk
+from nltk.tokenize import sent_tokenize
+
+# Ensure NLTK resources are downloaded
+nltk.download('punkt')
 
 def download_youtube_video(url, output_path='Test Videos'):
     import yt_dlp
@@ -22,15 +27,82 @@ def download_youtube_video(url, output_path='Test Videos'):
     return video_file
 
 def extract_audio_from_video(video_file):
-    audio_file = "extracted_audio.wav"
-    command = f"ffmpeg -i \"{video_file}\" -ab 160k -ac 2 -ar 44100 -vn {audio_file}"
+    # Name the audio file based on the video file name and properly escape it
+    base_name = os.path.splitext(os.path.basename(video_file))[0]
+    audio_file = f"{base_name}.wav"
+    escaped_video_file = video_file.replace('"', '\\"')
+    escaped_audio_file = audio_file.replace('"', '\\"')
+    command = f'ffmpeg -i "{escaped_video_file}" -ab 160k -ac 2 -ar 44100 -vn "{escaped_audio_file}"'
     subprocess.call(command, shell=True)
     return audio_file
 
 def transcribe_audio_with_whisper(audio_file):
     model = whisper.load_model("base")
-    result = model.transcribe(audio_file)
-    return result["text"]
+    result = model.transcribe(audio_file, word_timestamps=True)
+    return result
+
+def split_transcript_by_timestamps(result, interval=60):
+    segments = []
+    current_segment = []
+    last_time = 0
+
+    for segment in result['segments']:
+        start_time = segment['start']
+        end_time = segment['end']
+        text = segment['text']
+
+        # Create a new segment if the time gap exceeds the interval
+        if start_time - last_time > interval:
+            if current_segment:
+                segments.append(current_segment)
+            current_segment = [f"{start_time:.2f} - {end_time:.2f}", text]
+        else:
+            current_segment.append(text)
+
+        last_time = end_time
+
+    if current_segment:
+        segments.append(current_segment)
+
+    return segments
+
+def format_time(seconds):
+    minutes = int(seconds // 60)
+    seconds = int(seconds % 60)
+    return f"{minutes}:{seconds:02d}"
+
+def find_important_segments(transcript, max_segments=5, min_segment_length=30):
+    # Tokenize transcript into sentences
+    sentences = sent_tokenize(transcript)
+    
+    # Simplistic approach to finding "important" segments
+    importance_scores = [(i, len(sentence.split())) for i, sentence in enumerate(sentences)]
+    
+    # Sort sentences by length as a proxy for importance (longer sentences might be more informative)
+    importance_scores.sort(key=lambda x: x[1], reverse=True)
+    
+    # Select the top `max_segments` sentences as important
+    important_indices = sorted([i[0] for i in importance_scores[:max_segments]])
+    
+    # Group important sentences by proximity in the transcript
+    segments = []
+    current_segment = [important_indices[0]]
+    for idx in important_indices[1:]:
+        if idx == current_segment[-1] + 1:
+            current_segment.append(idx)
+        else:
+            segments.append(current_segment)
+            current_segment = [idx]
+    segments.append(current_segment)
+    
+    # Get the timestamps and ensure each segment is at least `min_segment_length` seconds long
+    important_segments = []
+    for segment in segments:
+        start_time = segment[0] * 5  # Estimate start time based on position (5 sec per sentence as an example)
+        end_time = max((segment[-1] + 1) * 5, start_time + min_segment_length)  # Ensure minimum segment length
+        important_segments.append((format_time(start_time), format_time(end_time)))
+    
+    return important_segments
 
 def preprocessing_input():
     choice = Prompt.ask("Choose your preprocessing input option", choices=["Download a new video", "Transcribe an existing video"])
@@ -39,7 +111,18 @@ def preprocessing_input():
         video_url = input("Enter the YouTube video URL: ")
         video_file = download_youtube_video(video_url)
         audio_file = extract_audio_from_video(video_file)
-        transcript = transcribe_audio_with_whisper(audio_file)
+        result = transcribe_audio_with_whisper(audio_file)
+        transcript = result['text']
+        transcript_groups = split_transcript_by_timestamps(result, interval=30)
+
+        important_segments = find_important_segments(transcript, max_segments=5, min_segment_length=30)
+
+        for group in transcript_groups:
+            print(Panel(f"[bold]{group[0]}[/bold]\n\n{''.join(group[1:])}", border_style="bold", title="Transcript"))
+
+        print("\n[bold green]Important Segments:[/bold green]")
+        for start_time, end_time in important_segments:
+            print(f"Segment: {start_time} - {end_time}")
 
     elif choice == "Transcribe an existing video":
         video_files = os.listdir('Test Videos')
@@ -51,15 +134,17 @@ def preprocessing_input():
         file_index = int(input("Choose a video file to transcribe: ")) - 1
         video_file = os.path.join('Test Videos', video_files[file_index])
         audio_file = extract_audio_from_video(video_file)
-        transcript = transcribe_audio_with_whisper(audio_file)
+        result = transcribe_audio_with_whisper(audio_file)
+        transcript = result['text']
+        transcript_groups = split_transcript_by_timestamps(result, interval=30)
 
-        with open("transcript.txt", "w") as file:
-            file.write(transcript)
-        print(Panel("Saved Transcript ✅", border_style="bold green"))
+        important_segments = find_important_segments(transcript, max_segments=5, min_segment_length=30)
 
-    print(Panel(f"{transcript}", border_style="bold", title="Transcript"))
+        for group in transcript_groups:
+            print(Panel(f"[bold]{group[0]}[/bold]\n\n{''.join(group[1:])}", border_style="bold", title="Transcript"))
 
+        print("\n[bold green]Important Segments:[/bold green]")
+        for start_time, end_time in important_segments:
+            print(f"Segment: {start_time} - {end_time}")
 
 preprocessing_input()
-
-
