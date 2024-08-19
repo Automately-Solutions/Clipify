@@ -104,6 +104,26 @@ def find_important_segments(transcript, max_segments=5, min_segment_length=30):
     
     return important_segments
 
+def convert_time_to_seconds(time_str):
+    m, s = map(int, time_str.split(':'))
+    return m * 3600 + s
+
+
+def extract_video_segments(video_file, start_time, end_time, output_file):
+    """
+    Extracts a given segment from the main video by using ffmpeg and the start_time and end_time to give accurate output
+    """
+
+    # convert the start_time and end_time to seconds
+    start_time_seconds = convert_time_to_seconds(start_time)
+    end_time_seconds = convert_time_to_seconds(end_time)
+
+    duration = end_time_seconds - start_time_seconds
+
+    command = f'ffmpeg -i "{video_file}" -ss {start_time_seconds} -to {end_time_seconds} -c copy "{output_file}"'
+
+    subprocess.run(command, shell=True, check=True)
+
 def preprocessing_input():
     choice = Prompt.ask("Choose your preprocessing input option", choices=["Download a new video", "Transcribe an existing video"])
 
@@ -115,7 +135,7 @@ def preprocessing_input():
         transcript = result['text']
         transcript_groups = split_transcript_by_timestamps(result, interval=30)
 
-        important_segments = find_important_segments(transcript, max_segments=5, min_segment_length=30)
+        important_segments = find_important_segments(transcript, max_segments=2, min_segment_length=30)
 
         for group in transcript_groups:
             print(Panel(f"[bold]{group[0]}[/bold]\n\n{''.join(group[1:])}", border_style="bold", title="Transcript"))
@@ -138,7 +158,7 @@ def preprocessing_input():
         transcript = result['text']
         transcript_groups = split_transcript_by_timestamps(result, interval=30)
 
-        important_segments = find_important_segments(transcript, max_segments=5, min_segment_length=30)
+        important_segments = find_important_segments(transcript, max_segments=2, min_segment_length=30)
 
         for group in transcript_groups:
             print(Panel(f"[bold]{group[0]}[/bold]\n\n{''.join(group[1:])}", border_style="bold", title="Transcript"))
@@ -146,5 +166,9 @@ def preprocessing_input():
         print("\n[bold green]Important Segments:[/bold green]")
         for start_time, end_time in important_segments:
             print(f"Segment: {start_time} - {end_time}")
+        for start_time, end_time in important_segments:
+            output_file = f"Extracted_segment_{start_time}_{end_time}.mp4"
+            extract_video_segments(video_file, start_time, end_time, output_file)
+            print(Panel(f"Extracted Segment from {start_time}-{end_time} and saved as {output_file}"))
 
 preprocessing_input()
