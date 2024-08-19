@@ -105,8 +105,19 @@ def find_important_segments(transcript, max_segments=5, min_segment_length=30):
     return important_segments
 
 def convert_time_to_seconds(time_str):
-    m, s = map(int, time_str.split(':'))
-    return m * 3600 + s
+    """
+    Converts a time string in the format HH:MM:SS or MM:SS to seconds.
+    Handles cases where the time string may not include hours.
+    """
+    parts = time_str.split(':')
+    if len(parts) == 3:  # Includes hours
+        h, m, s = map(int, parts)
+        return h * 3600 + m * 60 + s
+    elif len(parts) == 2:  # Excludes hours
+        m, s = map(int, parts)
+        return m * 60 + s
+    else:
+        raise ValueError("Invalid time format. Expected HH:MM:SS or MM:SS.")
 
 
 def extract_video_segments(video_file, start_time, end_time, output_file):
@@ -122,6 +133,7 @@ def extract_video_segments(video_file, start_time, end_time, output_file):
 
     command = f'ffmpeg -i "{video_file}" -ss {start_time_seconds} -to {end_time_seconds} -c copy "{output_file}"'
 
+    print(Panel(f"Executing command : {command}", border_style="bold green"))
     subprocess.run(command, shell=True, check=True)
 
 def preprocessing_input():
@@ -143,6 +155,11 @@ def preprocessing_input():
         print("\n[bold green]Important Segments:[/bold green]")
         for start_time, end_time in important_segments:
             print(f"Segment: {start_time} - {end_time}")
+        for start_time, end_time in important_segments:
+            output_file = f"Extracted_segment_{start_time}_{end_time}.mp4"
+            extract_video_segments(video_file, start_time, end_time, output_file)
+            print(Panel(f"Extracted Segment from {start_time}-{end_time} and saved as {output_file}", border_style="bold blue"))
+
 
     elif choice == "Transcribe an existing video":
         video_files = os.listdir('Test Videos')
@@ -169,6 +186,6 @@ def preprocessing_input():
         for start_time, end_time in important_segments:
             output_file = f"Extracted_segment_{start_time}_{end_time}.mp4"
             extract_video_segments(video_file, start_time, end_time, output_file)
-            print(Panel(f"Extracted Segment from {start_time}-{end_time} and saved as {output_file}"))
+            print(Panel(f"Extracted Segment from {start_time}-{end_time} and saved as {output_file}", border_style="bold blue"))
 
 preprocessing_input()
