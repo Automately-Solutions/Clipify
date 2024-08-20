@@ -145,9 +145,9 @@ def preprocessing_input():
         audio_file = extract_audio_from_video(video_file)
         result = transcribe_audio_with_whisper(audio_file)
         transcript = result['text']
-        transcript_groups = split_transcript_by_timestamps(result, interval=30)
+        transcript_groups = split_transcript_by_timestamps(result, interval=45)
 
-        important_segments = find_important_segments(transcript, max_segments=2, min_segment_length=30)
+        important_segments = find_important_segments(transcript, max_segments=5, min_segment_length=45)
 
         for group in transcript_groups:
             print(Panel(f"[bold]{group[0]}[/bold]\n\n{''.join(group[1:])}", border_style="bold", title="Transcript"))
