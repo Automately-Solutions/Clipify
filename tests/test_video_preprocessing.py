@@ -156,7 +156,7 @@ def preprocessing_input():
         for start_time, end_time in important_segments:
             print(f"Segment: {start_time} - {end_time}")
         for start_time, end_time in important_segments:
-            output_file = f"Extracted_segment_{start_time}_{end_time}.mp4"
+            output_file = f"Extracted Segments/Extracted_segment_{start_time}_{end_time}.mp4"
             extract_video_segments(video_file, start_time, end_time, output_file)
             print(Panel(f"Extracted Segment from {start_time}-{end_time} and saved as {output_file}", border_style="bold blue"))
 
