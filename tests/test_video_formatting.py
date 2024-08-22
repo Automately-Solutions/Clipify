@@ -8,20 +8,44 @@ from rich.panel import Panel
 
 import os
 import subprocess
+from moviepy.editor import VideoFileClip
+from moviepy.video.fx.all import crop
 
-def convert_video_aspect_ratio(input_path, output_path):
+def convert_video_aspect_ratio(input_folder, output_folder):
     # Create output folder if it doesn't exist
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-    # Loop over each video and convert the aspect ratio to 9:16
+    # Loop over all files in the input folder
     for filename in os.listdir(input_folder):
-        if filename.endswith(('.mp4', '.mov')):
+        if filename.endswith(('.mp4', '.mov', '.avi', '.mkv', '.flv', '.wmv')):  # Add other formats as needed
             input_file = os.path.join(input_folder, filename)
-            output_file = os.path.join(output_path, f"9_16_{filename}")
+            output_file = os.path.join(output_folder, f"9_16_{filename}")
 
-            command = f'ffmpeg -i "{input_file}" -vf "scale=ih*9/16:ih, pad=ih*9/16:ih:(ow-iw)/2:(oh-ih)/2" "{output_file}"'
-            subprocess.call(command, shell=True)
+            # Load the video clip
+            clip = VideoFileClip(input_file)
+
+            # Calculate the new size to maintain 9:16 aspect ratio
+            # Assuming the original video is landscape-oriented (width > height),
+            # we keep the original height and adjust the width.
+            # If the original video is portrait-oriented (height > width),
+            # we keep the original width and adjust the height.
+            if clip.size[0] > clip.size[1]:  # Landscape
+                new_width = int(clip.h * 9 / 16)
+                new_height = clip.h
+            else:  # Portrait
+                new_width = clip.w
+                new_height = int(clip.w * 9 / 16)
+
+            # Calculate the centering offsets
+            x_center_offset = (new_width - clip.w) / 2
+            y_center_offset = (new_height - clip.h) / 2
+
+            # Crop the clip to the new size and center it
+            cropped_clip = clip.fx(crop, width=new_width, height=new_height, x_center=x_center_offset, y_center=y_center_offset)
+
+            # Save the cropped clip
+            cropped_clip.write_videofile(output_file, codec='libx264', audio_codec='aac')
 
             print(Panel(f"Converted {filename} to aspect ratio 9:16 and saved as {output_file}", border_style="bold green"))
 
