@@ -1,0 +1,10 @@
+{
+    "editor.minimap.enabled": false,
+    "editor.fontFamily": "MesloLGS NF",
+    "editor.codeLensFontFamily": "MesloLGS NF",
+    "editor.inlayHints.fontFamily": "MesloLGS NF",
+    "editor.inlineSuggest.fontFamily": "MesloLGS NF",
+    "debug.console.fontFamily": "MesloLGS NF",
+    "editor.experimentalInlineEdit.fontFamily": "MesloLGS NF",
+    "editor.fontLigatures": true
+}
